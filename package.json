@@ -1,0 +1,38 @@
+{
+  "name": "@virto-network/node-e2e-tests",
+  "version": "1.0.0",
+  "description": "E2E Tests for Virto Node",
+  "private": true,
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "start": "node --env-file=.env --loader ts-node/esm index.ts",
+    "test": "node --env-file=.env --test --loader ts-node/esm test/index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/virto-network/virto-node-e2e-tests.git"
+  },
+  "keywords": [
+    "virto-node",
+    "kreivo",
+    "e2e"
+  ],
+  "author": "Virto Network <contact@virto.network>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/virto-network/virto-node-e2e-tests/issues"
+  },
+  "homepage": "https://github.com/virto-network/virto-node-e2e-tests#readme",
+  "dependencies": {
+    "@acala-network/chopsticks": "^0.9.10",
+    "@polkadot/api": "^10.12.2",
+    "@polkadot/keyring": "^12.6.2",
+    "@polkadot/types": "^10.12.2",
+    "@polkadot/wasm-crypto": "^7.3.2",
+    "ts-node": "^10.9.2"
+  },
+  "devDependencies": {
+    "@tsconfig/node21": "^21.0.1"
+  }
+}

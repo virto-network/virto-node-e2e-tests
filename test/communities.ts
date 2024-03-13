@@ -5,9 +5,11 @@ import { signTxSendAndWait } from "../lib/tx-send.js";
 import { ALICE, TREASURY } from "../lib/keyring.js";
 import { ApiPromise } from "@polkadot/api";
 import {
+  PalletNftsAttributeDeposit,
   PalletNftsItemDetails,
   PalletNftsPalletAttributes,
 } from "@polkadot/types/lookup";
+import { Option, Tuple, Vec, u8 } from "@polkadot/types";
 
 describe("Kreivo::CommunityMemberships", async () => {
   let api: ApiPromise;
@@ -31,6 +33,20 @@ describe("Kreivo::CommunityMemberships", async () => {
       ),
       ALICE
     );
+
+    api.registerTypes({
+      CommunityId: {
+        0: "u16",
+      },
+      MembershipId: {
+        0: "CommunityId",
+        1: "u32",
+      },
+      MembershipInfo: {
+        id: "MembershipId",
+        rank: "u32",
+      },
+    });
   });
 
   it("can create a membership", async () => {
@@ -51,36 +67,36 @@ describe("Kreivo::CommunityMemberships", async () => {
   });
 
   it("can set membershipInfo on an existing membership", async () => {
+    const membershipInfo = api.createType("MembershipInfo", {
+      id: api.createType("MembershipId", [
+        api.createType("CommunityId", [BigInt(1)]),
+        BigInt(1),
+      ]),
+      rank: BigInt(0),
+    });
+
     const initializeMembership = api.tx.communityMemberships.forceSetAttribute(
       null,
       0,
       [1, 1],
       "Pallet",
       "membership",
-      { id: [1, 1], rank: 0 }
+      membershipInfo.toHex()
     );
 
     await signTxSendAndWait(api.tx.sudo.sudo(initializeMembership), ALICE);
 
-    const membershipAttribute = await api.query.communityMemberships.attribute(
-      0,
-      [1, 1],
-      "Pallet",
-      "membership"
-    );
+    const membershipAttribute: Option<Tuple> =
+      (await api.query.communityMemberships.attribute(
+        0,
+        [1, 1],
+        "Pallet",
+        "membership"
+      )) as unknown as Option<Tuple>;
 
-    const [membershipInfo, _depositInfo] =
-      membershipAttribute.toPrimitive() as unknown as [
-        PalletNftsPalletAttributes,
-        unknown
-      ];
+    let attributeValue = membershipAttribute.unwrap()[0].toHex();
 
-    console.log(membershipInfo);
-
-    assert.equal(membershipInfo as unknown, {
-      id: [1, 1],
-      rank: 0,
-    });
+    assert.equal(attributeValue, membershipInfo.toHex());
   });
 
   after(() => chopsticksClient.close());

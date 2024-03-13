@@ -17,7 +17,11 @@ describe("Kreivo", async () => {
     assert.equal(aliceAccount.data.free.toString(), "1152921504606846976");
   });
 
-  after(() => chopsticksClient.close());
-});
+  await import("./communities.js");
 
-await import("./communities.js");
+  after(async () => {
+    chopsticksClient.close();
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
+    process.exit(0);
+  });
+});

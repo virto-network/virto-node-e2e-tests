@@ -1,4 +1,5 @@
 import {
+  Blockchain,
   BuildBlockMode,
   ChopsticksProvider,
   setup,
@@ -8,17 +9,18 @@ import { ApiPromise } from "@polkadot/api";
 export class ChopsticksClient {
   constructor(private endpoint = process.env.CHAIN_ENDPOINT) {}
 
+  private chain?: Blockchain;
   private provider?: ChopsticksProvider;
   #api?: ApiPromise;
 
   async initialize() {
-    const chain = await setup({
+    this.chain = await setup({
       buildBlockMode: BuildBlockMode.Batch,
       endpoint: this.endpoint,
       block: 1,
     });
 
-    const provider = new ChopsticksProvider(chain);
+    const provider = new ChopsticksProvider(this.chain);
     this.provider = provider;
 
     this.#api = new ApiPromise({ provider });
@@ -30,6 +32,10 @@ export class ChopsticksClient {
   async close() {
     await this.api?.disconnect();
     await this.provider?.disconnect();
+
+    await this.chain?.db?.close();
+    await this.chain?.api?.disconnect();
+    await this.chain?.close();
   }
 
   get api() {

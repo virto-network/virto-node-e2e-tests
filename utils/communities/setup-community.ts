@@ -62,6 +62,38 @@ const adminOrigin = {
 
 const createCommunity = api.tx.communities.create(adminOrigin, communityId);
 
+await signTxSendAndWait.withLogs(api.tx.sudo.sudo(createCommunity), ALICE);
+
+const createCommunityTrack = api.tx.communityTracks.insert(
+  1,
+  {
+    name: api.createType("[u8; 25]", "Virto Network".padEnd(25, " ")),
+    maxDeciding: 1,
+    decisionDeposit: 1,
+    preparePeriod: 1,
+    decisionPeriod: 1,
+    confirmPeriod: 1,
+    minEnactmentPeriod: 1,
+    minApproval: api.createType("PalletReferendaCurve", {
+      LinearDecreasing: {
+        length: 1e9,
+        ceil: 1e9,
+        floor: 5e8,
+      },
+    }),
+    minSupport: api.createType("PalletReferendaCurve", {
+      LinearDecreasing: {
+        length: 1e9,
+        ceil: 5e8,
+        floor: 0,
+      },
+    }),
+  },
+  adminOrigin
+);
+
+await signTxSendAndWait.withLogs(api.tx.sudo.sudo(createCommunityTrack), ALICE);
+
 const createMembership1 = api.tx.communityMemberships.forceMint(
   0,
   api.createType("MembershipId", [communityId, BigInt(1)]),
@@ -77,11 +109,7 @@ const createMembership2 = api.tx.communityMemberships.forceMint(
 
 await signTxSendAndWait.withLogs(
   api.tx.sudo.sudo(
-    api.tx.utility.batchAll([
-      createCommunity,
-      createMembership1,
-      createMembership2,
-    ])
+    api.tx.utility.batchAll([createMembership1, createMembership2])
   ),
   ALICE
 );

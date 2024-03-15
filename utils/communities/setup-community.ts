@@ -3,13 +3,27 @@ import { ALICE, BOB, TREASURY } from "../../lib/keyring.js";
 import { signTxSendAndWait } from "../../lib/tx-send.js";
 import assert from "node:assert";
 
+import { u8aToHex, hexToU8a } from "@polkadot/util";
+import { encodeAddress } from "@polkadot/util-crypto";
+import { Codec } from "@polkadot/types/types";
+
 let api = await ApiPromise.create({
-  provider: new WsProvider(
-    process.env.CHAIN_ENDPOINT ?? "ws://localhost:20000"
-  ),
+  provider: new WsProvider(process.env.CHAIN_ENDPOINT ?? "ws://localhost:8000"),
 });
 
 await api.isReady;
+
+function communityAccountFor(communityId: Codec): string {
+  // modlkv/cmtys
+  const rawAccount = new Uint8Array([
+    ...[0x6d, 0x6f, 0x64, 0x6c, 0x6b, 0x76, 0x2f, 0x63, 0x6d, 0x74, 0x79, 0x73],
+    ...communityId.toU8a(),
+  ]);
+
+  const accountIdRaw = hexToU8a(u8aToHex(rawAccount).padEnd(66, "0"));
+
+  return encodeAddress(accountIdRaw, 2);
+}
 
 const createMembershipCollection = api.tx.communityMemberships.forceCreate(
   TREASURY.address,
@@ -51,13 +65,13 @@ const createCommunity = api.tx.communities.create(adminOrigin, communityId);
 const createMembership1 = api.tx.communityMemberships.forceMint(
   0,
   api.createType("MembershipId", [communityId, BigInt(1)]),
-  TREASURY.address,
+  communityAccountFor(communityId),
   {}
 );
 const createMembership2 = api.tx.communityMemberships.forceMint(
   0,
   api.createType("MembershipId", [communityId, BigInt(2)]),
-  TREASURY.address,
+  communityAccountFor(communityId),
   {}
 );
 
@@ -116,33 +130,12 @@ await signTxSendAndWait.withLogs(
   ALICE
 );
 
-const approveReceiveMembership = api.tx.communityMemberships.transfer(
-  0,
-  api.createType("MembershipId", [communityId, BigInt(1)]),
-  TREASURY.address
+const addMember = api.tx.sudo.sudoAs(
+  communityAccountFor(communityId),
+  api.tx.communities.addMember(BOB.address)
 );
 
-await signTxSendAndWait.withLogs(
-  api.tx.sudo.sudoAs(BOB.address, approveReceiveMembership),
-  ALICE
-);
-
-const transferMembership = api.tx.communityMemberships.transfer(
-  0,
-  api.createType("MembershipId", [communityId, BigInt(1)]),
-  BOB.address
-);
-
-await signTxSendAndWait.withLogs(
-  api.tx.sudo.sudoAs(TREASURY.address, transferMembership),
-  ALICE
-);
-
-const setMembersCount = api.tx.system.setStorage([
-  [api.query.communities.communityMembersCount.key(1), "0x01000000"],
-]);
-
-await signTxSendAndWait.withLogs(api.tx.sudo.sudo(setMembersCount), ALICE);
+await signTxSendAndWait.withLogs(addMember, ALICE);
 
 assert.equal(await api.query.communities.communityMembersCount(1), 1);
 

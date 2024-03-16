@@ -17,7 +17,6 @@ export class ChopsticksClient {
     this.chain = await setup({
       buildBlockMode: BuildBlockMode.Batch,
       endpoint: this.endpoint,
-      block: 1,
     });
 
     const provider = new ChopsticksProvider(this.chain);
@@ -40,5 +39,9 @@ export class ChopsticksClient {
 
   get api() {
     return this.#api!;
+  }
+
+  get blockchain() {
+    return this.chain!;
   }
 }

@@ -59,22 +59,20 @@ describe("Chain", () => {
       `${process.cwd()}/kreivo_runtime.compact.compressed.wasm`;
     const newWasmRuntime = await readFile(wasmRuntimePath);
 
-    const code = api.createType("Bytes", newWasmRuntime.buffer);
-    const setCodeCall = api.tx.system.setCode(code);
+    const setCodeCall = api.tx.system.setCode(u8aToHex(newWasmRuntime));
 
-    await signTxSendAndWait.withLogs(api.tx.sudo.sudo(setCodeCall), ALICE);
-
+    await signTxSendAndWait(api.tx.sudo.sudo(setCodeCall), ALICE);
+    await chopsticksClient.blockchain.newBlock();
     await chopsticksClient.blockchain.newBlock();
 
     const thisRuntimeUpgrade = (
       await api.query.system.lastRuntimeUpgrade()
     ).unwrap();
 
-    // TODO: Somehow, make this work
-    // assert(
-    //   thisRuntimeUpgrade.specVersion.toNumber() >
-    //     lastRuntimeUpgrade.specVersion.toNumber()
-    // );
+    assert(
+      thisRuntimeUpgrade.specVersion.toNumber() >
+        lastRuntimeUpgrade.specVersion.toNumber()
+    );
   });
 
   after(async () => {

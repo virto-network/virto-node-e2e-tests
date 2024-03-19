@@ -5,9 +5,10 @@ import {
   setup,
 } from "@acala-network/chopsticks";
 import { ApiPromise } from "@polkadot/api";
+import config from "./config.js";
 
 export class ChopsticksClient {
-  constructor(private endpoint = process.env.CHAIN_ENDPOINT) {}
+  constructor(private endpoint = config.chain.endpoint) {}
 
   private chain?: Blockchain;
   private provider?: ChopsticksProvider;
@@ -15,7 +16,7 @@ export class ChopsticksClient {
 
   async initialize() {
     this.chain = await setup({
-      buildBlockMode: BuildBlockMode.Batch,
+      buildBlockMode: BuildBlockMode.Instant,
       endpoint: this.endpoint,
     });
 

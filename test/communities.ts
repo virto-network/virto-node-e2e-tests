@@ -1,32 +1,29 @@
 import assert from "node:assert";
 import { after, before, describe, it } from "node:test";
-import { ChopsticksClient } from "../lib/chopsticks.js";
+
+import { ApiPromise } from "@polkadot/api";
+import { Option, Tuple } from "@polkadot/types";
+import { PalletNftsItemDetails } from "@polkadot/types/lookup";
+
 import { signTxSendAndWait } from "../lib/tx-send.js";
 import { ALICE, TREASURY } from "../lib/keyring.js";
-import { ApiPromise } from "@polkadot/api";
-import {
-  PalletNftsAttributeDeposit,
-  PalletNftsItemDetails,
-  PalletNftsPalletAttributes,
-} from "@polkadot/types/lookup";
-import { Option, Tuple, Vec, u8 } from "@polkadot/types";
+import { KreivoE2ERuntime } from "../lib/kreivo-e2e-runtime.js";
 
-describe("Kreivo::CommunityMemberships", async () => {
+describe("Communities", async () => {
   let api: ApiPromise;
-  let chopsticksClient: ChopsticksClient;
+  let kreivoE2ERuntime: KreivoE2ERuntime;
 
   before(async () => {
-    chopsticksClient = await new ChopsticksClient().initialize();
-    api = chopsticksClient.api;
+    kreivoE2ERuntime = await new KreivoE2ERuntime().initialize();
+    api = kreivoE2ERuntime.api;
 
-    const createMembershipCollection = api.tx.communityMemberships.forceCreate(
-      TREASURY.address,
-      {}
-    );
+    const createMembershipManagerCollection =
+      api.tx.communityMemberships.forceCreate(TREASURY.address, {});
     await signTxSendAndWait(
-      api.tx.sudo.sudo(createMembershipCollection),
+      api.tx.sudo.sudo(createMembershipManagerCollection),
       ALICE
     );
+
     await signTxSendAndWait(
       api.tx.sudo.sudo(
         api.tx.balances.forceSetBalance(TREASURY.address, 2 ** 53 - 1)
@@ -99,7 +96,7 @@ describe("Kreivo::CommunityMemberships", async () => {
     assert.equal(attributeValue, membershipInfo.toHex());
   });
 
-  after(() => chopsticksClient.close());
+  after(() => kreivoE2ERuntime.close());
 });
 
 // import { WsProvider } from "@polkadot/api";

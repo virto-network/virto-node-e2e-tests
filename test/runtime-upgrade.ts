@@ -9,15 +9,12 @@ import { ChopsticksClient } from "../lib/chopsticks.js";
 import { ALICE } from "../lib/keyring.js";
 import { signTxSendAndWait } from "../lib/tx-send.js";
 
-describe("Chain", () => {
+describe("RuntimeUpgrade", () => {
   let api: ApiPromise;
   let chopsticksClient: ChopsticksClient;
 
   before(async () => {
-    chopsticksClient = await new ChopsticksClient(
-      process.env.CHAIN_ENDPOINT_LIVE ?? "wss://kreivo.kippu.rocks/"
-    ).initialize();
-
+    chopsticksClient = await new ChopsticksClient().initialize();
     api = chopsticksClient.api;
   });
 
@@ -75,9 +72,5 @@ describe("Chain", () => {
     );
   });
 
-  after(async () => {
-    await chopsticksClient.close();
-    await new Promise((resolve) => setTimeout(resolve, 1_000));
-    process.exit(0);
-  });
+  after(() => chopsticksClient.close());
 });

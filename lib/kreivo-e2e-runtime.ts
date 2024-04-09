@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 
 import { u8aToHex } from "@polkadot/util";
 
-import { ChopsticksClient } from "./chopsticks.js";
+import { ChopsticksClient, ClientInitializationOptions } from "./chopsticks.js";
 import { ALICE } from "./keyring.js";
 import { signTxSendAndWait } from "./tx-send.js";
 import config from "./config.js";
@@ -11,8 +11,8 @@ import { encodeAddress } from "@polkadot/keyring";
 import { blake2b } from "hash-wasm";
 
 export class KreivoE2ERuntime extends ChopsticksClient {
-  async initialize(withServer = false) {
-    await super.initialize(withServer);
+  async initialize(initializationOptions?: ClientInitializationOptions) {
+    await super.initialize(initializationOptions);
 
     await this.overrideSudo();
     await this.runRuntimeUpgrade();

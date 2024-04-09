@@ -8,6 +8,20 @@ import {
 import { ApiPromise } from "@polkadot/api";
 import config from "./config.js";
 
+export enum RuntimeLogLevel {
+  Off = 0,
+  Error = 1,
+  Warn = 2,
+  Info = 3,
+  Debug = 4,
+  Trace = 5,
+}
+
+export type ClientInitializationOptions = {
+  withServer?: boolean;
+  runtimeLogLevel?: RuntimeLogLevel;
+};
+
 export class ChopsticksClient {
   constructor(private endpoint = config.chain.endpoint) {}
 
@@ -15,17 +29,22 @@ export class ChopsticksClient {
   private provider?: ChopsticksProvider;
   #api?: ApiPromise;
 
-  async initialize(withServer = false) {
+  async initialize({
+    withServer = false,
+    runtimeLogLevel = RuntimeLogLevel.Info,
+  }: ClientInitializationOptions = {}) {
     if (!withServer) {
       this.chain = await setup({
         buildBlockMode: BuildBlockMode.Instant,
         endpoint: this.endpoint,
+        runtimeLogLevel,
       });
     } else {
       const { chain } = await setupWithServer({
         "build-block-mode": BuildBlockMode.Instant,
         endpoint: this.endpoint,
         port: 8000,
+        "runtime-log-level": runtimeLogLevel,
       });
 
       this.chain = chain;

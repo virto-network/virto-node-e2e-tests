@@ -8,10 +8,11 @@ import { ALICE } from "./keyring.js";
 import { signTxSendAndWait } from "./tx-send.js";
 import config from "./config.js";
 import { encodeAddress } from "@polkadot/keyring";
+import { blake2b } from "hash-wasm";
 
 export class KreivoE2ERuntime extends ChopsticksClient {
-  async initialize() {
-    await super.initialize();
+  async initialize(withServer = false) {
+    await super.initialize(withServer);
 
     await this.overrideSudo();
     await this.runRuntimeUpgrade();
@@ -69,9 +70,18 @@ export class KreivoE2ERuntime extends ChopsticksClient {
     ).unwrap();
 
     const newWasmRuntime = await readFile(config.runtime.wasmFilepath);
+    const hash = await blake2b(newWasmRuntime, 256);
 
-    const setCodeCall = this.api.tx.system.setCode(u8aToHex(newWasmRuntime));
-    await signTxSendAndWait(this.api.tx.sudo.sudo(setCodeCall), sudo);
+    const authorizeUpgradeCall = this.api.tx.parachainSystem.authorizeUpgrade(
+      `0x${hash}`,
+      false
+    );
+    const enactAuthorizedUpgradeCall =
+      this.api.tx.parachainSystem.enactAuthorizedUpgrade(
+        u8aToHex(newWasmRuntime)
+      );
+    await signTxSendAndWait(this.api.tx.sudo.sudo(authorizeUpgradeCall), sudo);
+    await signTxSendAndWait(enactAuthorizedUpgradeCall, sudo);
 
     await this.blockchain.newBlock();
     await this.blockchain.newBlock();

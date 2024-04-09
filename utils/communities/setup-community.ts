@@ -1,29 +1,16 @@
-import { ApiPromise, WsProvider } from "@polkadot/api";
-import { ALICE, BOB, TREASURY } from "../../lib/keyring.js";
-import { signTxSendAndWait } from "../../lib/tx-send.js";
 import assert from "node:assert";
 
-import { u8aToHex, hexToU8a } from "@polkadot/util";
-import { encodeAddress } from "@polkadot/util-crypto";
-import { Codec } from "@polkadot/types/types";
+import { ApiPromise, WsProvider } from "@polkadot/api";
+
+import { communityAccountFor } from "../../lib/helpers.js";
+import { ALICE, BOB, TREASURY } from "../../lib/keyring.js";
+import { signTxSendAndWait } from "../../lib/tx-send.js";
 
 let api = await ApiPromise.create({
   provider: new WsProvider(process.env.CHAIN_ENDPOINT ?? "ws://localhost:8000"),
 });
 
 await api.isReady;
-
-function communityAccountFor(communityId: Codec): string {
-  // modlkv/cmtys
-  const rawAccount = new Uint8Array([
-    ...[0x6d, 0x6f, 0x64, 0x6c, 0x6b, 0x76, 0x2f, 0x63, 0x6d, 0x74, 0x79, 0x73],
-    ...communityId.toU8a(),
-  ]);
-
-  const accountIdRaw = hexToU8a(u8aToHex(rawAccount).padEnd(66, "0"));
-
-  return encodeAddress(accountIdRaw, 2);
-}
 
 const createMembershipCollection = api.tx.communityMemberships.forceCreate(
   TREASURY.address,

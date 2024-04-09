@@ -3,7 +3,7 @@ import { waitReady } from "@polkadot/wasm-crypto";
 
 await waitReady();
 
-const keyring = new Keyring({ ss58Format: 2, type: "sr25519" });
+export const keyring = new Keyring({ ss58Format: 2, type: "sr25519" });
 
 export const ALICE = keyring.createFromUri("//Alice");
 export const BOB = keyring.createFromUri("//Bob");

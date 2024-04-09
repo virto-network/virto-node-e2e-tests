@@ -3,6 +3,7 @@ import {
   BuildBlockMode,
   ChopsticksProvider,
   setup,
+  setupWithServer,
 } from "@acala-network/chopsticks";
 import { ApiPromise } from "@polkadot/api";
 import config from "./config.js";
@@ -14,11 +15,21 @@ export class ChopsticksClient {
   private provider?: ChopsticksProvider;
   #api?: ApiPromise;
 
-  async initialize() {
-    this.chain = await setup({
-      buildBlockMode: BuildBlockMode.Instant,
-      endpoint: this.endpoint,
-    });
+  async initialize(withServer = false) {
+    if (!withServer) {
+      this.chain = await setup({
+        buildBlockMode: BuildBlockMode.Instant,
+        endpoint: this.endpoint,
+      });
+    } else {
+      const { chain } = await setupWithServer({
+        "build-block-mode": BuildBlockMode.Instant,
+        endpoint: this.endpoint,
+        port: 8000,
+      });
+
+      this.chain = chain;
+    }
 
     const provider = new ChopsticksProvider(this.chain);
     this.provider = provider;

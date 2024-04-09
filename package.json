@@ -8,7 +8,8 @@
   "scripts": {
     "start": "node --env-file=.env --loader ts-node/esm index.ts",
     "test": "LOG_LEVEL=error node --env-file=.env --test --loader ts-node/esm test/index.ts",
-    "utils:setup-community": "node --loader ts-node/esm utils/communities/setup-community.ts"
+    "utils:setup-community": "node --loader ts-node/esm utils/communities/setup-community.ts",
+    "utils:kreivo103": "node --loader ts-node/esm utils/communities/kreivo-103.ts"
   },
   "repository": {
     "type": "git",
@@ -31,6 +32,7 @@
     "@polkadot/keyring": "^12.6.2",
     "@polkadot/types": "^10.12.2",
     "@polkadot/wasm-crypto": "^7.3.2",
+    "hash-wasm": "^4.11.0",
     "ts-node": "^10.9.2"
   },
   "devDependencies": {

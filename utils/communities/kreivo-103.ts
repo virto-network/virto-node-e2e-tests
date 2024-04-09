@@ -3,10 +3,14 @@ import { signTxSendAndWait } from "../../lib/tx-send.js";
 import { communityAccountFor } from "../../lib/helpers.js";
 import { KreivoE2ERuntime } from "../../lib/kreivo-e2e-runtime.js";
 
-import { u128, u32 } from "@polkadot/types";
+import { u128 } from "@polkadot/types";
+import { RuntimeLogLevel } from "../../lib/chopsticks.js";
 
 // Connect to upgraded provider
-const { api } = await new KreivoE2ERuntime().initialize(true);
+const { api } = await new KreivoE2ERuntime().initialize({
+  withServer: true,
+  runtimeLogLevel: RuntimeLogLevel.Trace,
+});
 
 api.registerTypes({
   CommunityId: "u16",
@@ -14,16 +18,23 @@ api.registerTypes({
 });
 
 // ======= Seed Parameters =======
-const virtoCommunityId = api.createType("CommunityId", BigInt(1));
-const adminOrigin = {
-  Communities: {
-    communityId: virtoCommunityId,
-  },
-};
-
 const OLANOD = "EvoLanodoqDsgHb98Ymbu41uXXKfCPDKxeM6dXHyJ2JoVus";
 const PANDRES95 = "HUf7Nvfhp85yFZm31zV2ux8h1946Bzzmos2jqGGhp3bWXD4";
 const S0C5 = "CzbcJ48jKNoh9Kiubw7e5Y2Ur1XggipLVfmnnQxpFTbvCU3";
+
+await signTxSendAndWait.withLogs(
+  api.tx.sudo.sudo(api.tx.balances.forceSetBalance(OLANOD, 1e15)),
+  ALICE
+);
+
+const virtoCommunityId = api.createType("CommunityId", 1n);
+console.log("==== VirtoCommunityId: %s ====", virtoCommunityId.toHex(true));
+
+const adminOrigin = {
+  System: {
+    Signed: OLANOD,
+  },
+};
 
 const seedMembers = [OLANOD, PANDRES95, S0C5];
 
@@ -105,7 +116,7 @@ const setMemberCountIntoVirto = api.tx.communityMemberships.forceSetAttribute(
   null,
   { Pallet: null },
   "membership_member_count",
-  api.createType("MembershipId", BigInt(seedMembers.length)).toHex()
+  api.createType("MembershipId", BigInt(seedMembers.length)).toHex(true)
 );
 
 // ======= Create Community, set decision method, set metadata =======
@@ -157,6 +168,15 @@ const createCommunityTrack = api.tx.communityTracks.insert(
   adminOrigin
 );
 
+// ======= Add Community Account to Collective =======
+
+const addVirtoAccountToCollective = api.tx.kreivoCollective.addMember(
+  virtoCommunityAccount
+);
+
+const increaseVirtoAccountRankInCollective =
+  api.tx.kreivoCollective.promoteMember(virtoCommunityAccount);
+
 // ======= Build seedling extrinsic =======
 
 const seedling = api.tx.sudo.sudo(
@@ -175,6 +195,9 @@ const seedling = api.tx.sudo.sudo(
     setCommunityMetadata,
     // On CommunityTracks
     createCommunityTrack,
+    // On RankedCollective
+    addVirtoAccountToCollective,
+    increaseVirtoAccountRankInCollective,
   ])
 );
 
